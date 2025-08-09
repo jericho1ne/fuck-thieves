@@ -61,7 +61,9 @@ function clearAccuracyCircles() {
   }
 }
 
-// Change map style
+/**
+ * Toggle between our map styles array defined in MAP_STYLES.
+ */
 function changeMapStyle() {
   if (map.value && currentStyle.value) {
     map.value.setStyle(currentStyle.value)
