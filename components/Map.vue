@@ -305,14 +305,7 @@ onMounted(async () => {
   try {
     // Initialize the store
     locationStore.value = useLocationStore()
-    
-    console.log('Initializing map...')
-    console.log('Runtime config:', config)
-    console.log('Mapbox token:', MAPBOX_TOKEN ? 'Present' : 'Missing')
-    console.log('Mapbox token length:', MAPBOX_TOKEN?.length)
-    console.log('Current domain:', window.location.hostname)
-    console.log('Current URL:', window.location.href)
-    
+        
     if (!MAPBOX_TOKEN || MAPBOX_TOKEN.trim() === '') {
       console.error('No mapbox token found')
       throw new Error('Mapbox token is missing')
@@ -320,7 +313,6 @@ onMounted(async () => {
     
     // Set mapbox access token
     mapboxgl.accessToken = MAPBOX_TOKEN
-    console.log('Set mapboxgl.accessToken')
     
     // Wait for the DOM to be ready
     await nextTick()
@@ -343,7 +335,6 @@ onMounted(async () => {
     
     // Log when map loads successfully
     map.value.on('load', () => {
-      console.log('Map loaded successfully!')
       createMarkers()
     })
     
