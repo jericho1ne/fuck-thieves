@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
+    "@turf/turf": "^7.2.0",
     "@types/mapbox-gl": "^2.7.19",
     "@types/node": "^20.10.5",
     "@typescript-eslint/eslint-plugin": "^8.34.0",

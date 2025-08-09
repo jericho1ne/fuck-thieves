@@ -45,6 +45,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
 import mapboxgl from 'mapbox-gl'
+import * as turf from '@turf/turf'
 
 // Circle scaling constants
 const ZOOM_MIN_MULT = 0.15
@@ -171,43 +172,33 @@ function calculateMarkerPositions(locations) {
 // Create markers for locations
 function createMarkers() {
   if (!map.value || !props.locations.length) return
-  
+
   // Clear existing markers
   markers.value.forEach(marker => marker.remove())
   markers.value = []
-  
+
   // Clear existing accuracy circles
   clearAccuracyCircles()
-  
+
   // Calculate positions with anti-overlap offsets
   const positionedLocations = calculateMarkerPositions(props.locations)
-  
-  // Create GeoJSON features for accuracy circles (use original positions for accuracy circles)
+
+  // Create GeoJSON polygons for accuracy circles using turf
   const circleFeatures = props.locations.map((location, index) => {
     if (!location.lat || !location.lon || !location.accuracy) return null;
-
-    // Calculate meters per pixel at this latitude and zoom level
-    const currentZoom = map.value.getZoom();
-    const lat = location.lat;
-    // Correct formula for meters per pixel in Web Mercator
-    const metersPerPixel = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, currentZoom);
-    const radiusInPixels = location.accuracy / metersPerPixel;
-
-    return {
-      type: 'Feature',
+    // Use turf to create a circle polygon in meters
+    const circle = turf.circle([location.lon, location.lat], location.accuracy, {
+      steps: 64,
+      units: 'meters',
       properties: {
         id: `accuracy-${index}`,
         accuracy: location.accuracy,
-        lat: location.lat,
-        radius: radiusInPixels
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [location.lon, location.lat] // Use original coordinates for accuracy circles
+        lat: location.lat
       }
-    };
+    });
+    return circle;
   }).filter(Boolean)
-  
+
   // Add accuracy circles source and layers
   if (circleFeatures.length > 0) {
     map.value.addSource('accuracy-circles', {
@@ -217,30 +208,27 @@ function createMarkers() {
         features: circleFeatures
       }
     })
-    
-    // Add fill circles (dark gray with 30% opacity)
+
+    // Add fill polygons (dark gray with 20% opacity)
     map.value.addLayer({
       id: 'accuracy-circles-fill',
-      type: 'circle',
+      type: 'fill',
       source: 'accuracy-circles',
       paint: {
-        'circle-radius': ['get', 'radius'],
-        'circle-color': '#4a4a4a',
-        'circle-opacity': 0.2
+        'fill-color': '#4a4a4a',
+        'fill-opacity': 0.2
       }
     })
-    
-    // Add border circles (white outline)
+
+    // Add border polygons (white outline)
     map.value.addLayer({
       id: 'accuracy-circles-border',
-      type: 'circle',
+      type: 'line',
       source: 'accuracy-circles',
       paint: {
-        'circle-radius': ['get', 'radius'],
-        'circle-color': 'transparent',
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-opacity': 0.8
+        'line-color': '#ffffff',
+        'line-width': 2,
+        'line-opacity': 0.8
       }
     })
   }
