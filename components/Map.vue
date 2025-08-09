@@ -2,6 +2,16 @@
   <div class="map-view">
     <div v-if="locationStore?.loading" class="loading">Loading recent locations...</div>
     <div v-else-if="locationStore?.error" class="error">{{ locationStore.error }}</div>
+    
+    <!-- Map Style Dropdown -->
+    <div class="map-style-selector">
+      <select v-model="currentStyle" @change="changeMapStyle" class="style-dropdown">
+        <option v-for="(url, key) in MAP_STYLES" :key="key" :value="url">
+          {{ key.charAt(0).toUpperCase() + key.slice(1) }}
+        </option>
+      </select>
+    </div>
+    
     <div ref="mapContainer" class="map-view__container"></div>
   </div>
 </template>
@@ -21,6 +31,18 @@ const map = ref(null)
 const markers = ref([])
 const locationStore = ref(null)
 
+const MAP_STYLES = {
+  dark: 'mapbox://styles/mapbox/dark-v10',
+  streets: 'mapbox://styles/mapbox/streets-v12',
+  satellite: 'mapbox://styles/mapbox/standard-satellite',
+}
+
+const currentStyle = ref(MAP_STYLES.dark)
+  
+
+const INIT_CENTER = [-118.41, 33.99373]   // Focus on Mar Vista Gardens
+const INIT_ZOOM = 13  
+
 // Clear accuracy circles from the map
 function clearAccuracyCircles() {
   if (!map.value) return
@@ -36,6 +58,20 @@ function clearAccuracyCircles() {
   // Remove source if it exists
   if (map.value.getSource('accuracy-circles')) {
     map.value.removeSource('accuracy-circles')
+  }
+}
+
+// Change map style
+function changeMapStyle() {
+  if (map.value && currentStyle.value) {
+    map.value.setStyle(currentStyle.value)
+    
+    // Re-add markers and accuracy circles after style loads
+    map.value.once('styledata', () => {
+      if (locationStore.value && locationStore.value.locations.length > 0) {
+        createMarkers()
+      }
+    })
   }
 }
 
@@ -58,7 +94,7 @@ function selectLocation(index) {
     // Pan to the selected marker
     map.value.flyTo({
       center: [location.lon, location.lat],
-      zoom: 16,
+      zoom: 14,
       duration: 1000
     })
     
@@ -256,7 +292,7 @@ function createMarkers() {
     if (!bounds.isEmpty()) {
       map.value.fitBounds(bounds, {
         padding: 50,
-        maxZoom: 15.75
+        maxZoom: 15
       })
     }
   }
@@ -292,13 +328,12 @@ onMounted(async () => {
       return
     }
     
-    
     // Initialize the map with a simpler configuration
     map.value = new mapboxgl.Map({
       container: mapContainer.value,
-      style: 'mapbox://styles/mapbox/streets-v12', // Use a simpler style
-      center: [-118.41, 33.99373],
-      zoom: 15.5,
+      style: currentStyle.value, // Use a simpler style
+      center: INIT_CENTER,
+      zoom: INIT_ZOOM,
       attributionControl: false,
     })
     
@@ -407,6 +442,43 @@ onUnmounted(() => {
     height: 100%;
     background-color: #e0e0e0;
     position: relative;
+  }
+}
+
+.map-style-selector {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  
+  .style-dropdown {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:focus {
+      outline: 2px solid #FF5E5B;
+      outline-offset: 1px;
+    }
+    
+    option {
+      background: white;
+      color: #333;
+      padding: 4px;
+    }
   }
 }
 
