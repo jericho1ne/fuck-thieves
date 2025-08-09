@@ -7,8 +7,7 @@
     <!-- Right floating sidebar -->
     <div class="sidebar">
       <div class="sidebar__header">
-        <h3>🚲 Bike Locations</h3>
-        <p class="sidebar__count">{{ props.locations.length }} locations</p>
+        <h3>🚲 Recent X3 Locations</h3>
       </div>
       
       <div class="sidebar__content">
@@ -384,7 +383,7 @@ onUnmounted(() => {
   right: 0;
   width: 300px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   border-left: 1px solid rgba(0, 0, 0, 0.1);
   z-index: 1000;
@@ -392,7 +391,7 @@ onUnmounted(() => {
   flex-direction: column;
   
   &__header {
-    padding: 20px;
+    padding: 10px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     background: rgba(255, 255, 255, 0.9);
     
