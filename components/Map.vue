@@ -1,6 +1,6 @@
 <template>
   <div class="map-view">
-    <div v-if="props.loading" class="loading">Loading bike location...</div>
+    <div v-if="props.loading" class="loading">Loading recent locations...</div>
     <div v-else-if="props.error" class="error">{{ props.error }}</div>
     <div ref="mapContainer" class="map-view__container"></div>
     
@@ -45,6 +45,10 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
 import mapboxgl from 'mapbox-gl'
+
+// Circle scaling constants
+const ZOOM_MIN_MULT = 0.15
+const ZOOM_MAX_MULT = 20
 
 const config = useRuntimeConfig()
 const MAPBOX_TOKEN = config.public.mapboxToken
@@ -113,6 +117,57 @@ function selectLocation(index) {
   }
 }
 
+// Helper function to calculate distance between two points in meters
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000 // Earth's radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+           Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+           Math.sin(dLon/2) * Math.sin(dLon/2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+  return R * c
+}
+
+// Helper function to calculate marker positions with anti-overlap offsets
+function calculateMarkerPositions(locations) {
+  const OVERLAP_THRESHOLD = 10 // meters - consider markers overlapping if closer than this
+  const OFFSET_DISTANCE = 0.00008 // degrees - roughly 8-10 meters offset
+  
+  return locations.map((location, index) => {
+    if (!location.lat || !location.lon) return { ...location, displayLat: location.lat, displayLon: location.lon }
+    
+    let displayLat = location.lat
+    let displayLon = location.lon
+    
+    // Check for overlaps with previous markers
+    for (let i = 0; i < index; i++) {
+      const otherLocation = locations[i]
+      if (!otherLocation.lat || !otherLocation.lon) continue
+      
+      const distance = calculateDistance(location.lat, location.lon, otherLocation.lat, otherLocation.lon)
+      
+      if (distance < OVERLAP_THRESHOLD) {
+        // Calculate offset angle - spread overlapping markers in a circle
+        const overlapCount = locations.slice(0, index).filter(loc => 
+          loc.lat && loc.lon && calculateDistance(location.lat, location.lon, loc.lat, loc.lon) < OVERLAP_THRESHOLD
+        ).length
+        
+        const angle = (overlapCount * 60) * (Math.PI / 180) // 60 degrees apart
+        displayLat = location.lat + (OFFSET_DISTANCE * Math.sin(angle))
+        displayLon = location.lon + (OFFSET_DISTANCE * Math.cos(angle))
+        break
+      }
+    }
+    
+    return {
+      ...location,
+      displayLat,
+      displayLon
+    }
+  })
+}
+
 // Create markers for locations
 function createMarkers() {
   if (!map.value || !props.locations.length) return
@@ -124,21 +179,33 @@ function createMarkers() {
   // Clear existing accuracy circles
   clearAccuracyCircles()
   
-  // Create GeoJSON features for accuracy circles
+  // Calculate positions with anti-overlap offsets
+  const positionedLocations = calculateMarkerPositions(props.locations)
+  
+  // Create GeoJSON features for accuracy circles (use original positions for accuracy circles)
   const circleFeatures = props.locations.map((location, index) => {
-    if (!location.lat || !location.lon || !location.accuracy) return null
-    
+    if (!location.lat || !location.lon || !location.accuracy) return null;
+
+    // Calculate meters per pixel at this latitude and zoom level
+    const currentZoom = map.value.getZoom();
+    const lat = location.lat;
+    // Correct formula for meters per pixel in Web Mercator
+    const metersPerPixel = 156543.03392 * Math.cos(lat * Math.PI / 180) / Math.pow(2, currentZoom);
+    const radiusInPixels = location.accuracy / metersPerPixel;
+
     return {
       type: 'Feature',
       properties: {
         id: `accuracy-${index}`,
-        accuracy: location.accuracy
+        accuracy: location.accuracy,
+        lat: location.lat,
+        radius: radiusInPixels
       },
       geometry: {
         type: 'Point',
-        coordinates: [location.lon, location.lat]
+        coordinates: [location.lon, location.lat] // Use original coordinates for accuracy circles
       }
-    }
+    };
   }).filter(Boolean)
   
   // Add accuracy circles source and layers
@@ -157,15 +224,9 @@ function createMarkers() {
       type: 'circle',
       source: 'accuracy-circles',
       paint: {
-        'circle-radius': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          10, ['*', ['*', ['get', 'accuracy'], 0.5], 0.1],
-          20, ['*', ['*', ['get', 'accuracy'], 0.5], 2]
-        ],
+        'circle-radius': ['get', 'radius'],
         'circle-color': '#4a4a4a',
-        'circle-opacity': 0.3
+        'circle-opacity': 0.2
       }
     })
     
@@ -175,13 +236,7 @@ function createMarkers() {
       type: 'circle',
       source: 'accuracy-circles',
       paint: {
-        'circle-radius': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          10, ['*', ['*', ['get', 'accuracy'], 0.5], 0.1],
-          20, ['*', ['*', ['get', 'accuracy'], 0.5], 2]
-        ],
+        'circle-radius': ['get', 'radius'],
         'circle-color': 'transparent',
         'circle-stroke-width': 2,
         'circle-stroke-color': '#ffffff',
@@ -266,14 +321,12 @@ onMounted(async () => {
       return
     }
     
-    console.log('Creating map instance...')
-    console.log('Using style: mapbox://styles/mapbox/satellite-v9')
     
     // Initialize the map with a simpler configuration
     map.value = new mapboxgl.Map({
       container: mapContainer.value,
-      style: 'mapbox://styles/mapbox/satellite-v9', // Use a simpler style
-      center: [-118.41, 33.99373], // New York City coordinates as default
+      style: 'mapbox://styles/mapbox/streets-v12', // Use a simpler style
+      center: [-118.41, 33.99373],
       zoom: 15.5
     })
     
