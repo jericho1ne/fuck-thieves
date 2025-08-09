@@ -32,12 +32,12 @@ const markers = ref([])
 const locationStore = ref(null)
 
 const MAP_STYLES = {
+  satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
   dark: 'mapbox://styles/mapbox/dark-v10',
   streets: 'mapbox://styles/mapbox/streets-v12',
-  satellite: 'mapbox://styles/mapbox/standard-satellite',
 }
 
-const currentStyle = ref(MAP_STYLES.dark)
+const currentStyle = ref(MAP_STYLES.satellite)
   
 
 const INIT_CENTER = [-118.41, 33.99373]   // Focus on Mar Vista Gardens
@@ -452,20 +452,18 @@ onUnmounted(() => {
   z-index: 1000;
   
   .style-dropdown {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: rgba(200, 200, 200, 0.9);
     border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 4px 8px 4px 4px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 700;
     color: #333;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.2s ease;
     
     &:hover {
-      background: rgba(255, 255, 255, 1);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
     
@@ -505,27 +503,5 @@ onUnmounted(() => {
   background-color: rgba(244, 67, 54, 0.95);
   color: white;
   max-width: 300px;
-}
-</style>
-
-
-<style lang="scss" scoped>
-@use "sass:color";
-
-.map-view {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: #fff;
-  border-radius: 12px;
-  overflow: hidden; // Restrict overflow only for the map view
-
-  &__container {
-    width: 100%;
-    height: 100%;
-    background-color: #e0e0e0;
-    position: relative;
-  }
 }
 </style>

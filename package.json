@@ -15,7 +15,7 @@
     "@pinia/nuxt": "^0.5.1",
     "@supabase/supabase-js": "^2.50.0",
     "@vueuse/head": "^2.0.0",
-    "mapbox-gl": "^2.15.0",
+    "mapbox-gl": "^3.14.0",
     "pinia": "^2.1.7",
     "sass": "^1.69.5"
   },
