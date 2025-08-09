@@ -1,9 +1,11 @@
 <template>
   <div class="app">
-    <Map 
-      :locations="locations" 
-      :loading="loading" 
-      :error="error" 
+    <Map />
+    <Sidebar 
+      v-if="locationStore"
+      :locations="locationStore.locations"
+      :selectedLocationIndex="locationStore.selectedLocationIndex"
+      @location-click="locationStore.handleSidebarLocationClick"
     />
   </div>
 </template>
@@ -11,16 +13,19 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Map from '~/components/Map.vue'
+import Sidebar from '~/components/Sidebar.vue'
+import { useLocationStore } from '~/stores/location-store'
 
-const locations = ref([])
-const loading = ref(true)
-const error = ref(null)
+// Only access the store after mounting to avoid SSR issues
+const locationStore = ref(null)
 
 // Fetch bike location data
 async function fetchBikeLocation() {
+  if (!locationStore.value) return
+  
   try {
-    loading.value = true
-    error.value = null
+    locationStore.value.setLoading(true)
+    locationStore.value.clearError()
     
     const response = await $fetch('/api/get-latest-location')
     
@@ -36,7 +41,7 @@ async function fetchBikeLocation() {
     }
     
     // Transform the coordinates array to match the expected format
-    locations.value = locationData.coordinates.map((coord, index) => ({
+    const transformedLocations = locationData.coordinates.map((coord, index) => ({
       id: index,
       lat: coord.lat,
       lon: coord.lon,
@@ -49,18 +54,19 @@ async function fetchBikeLocation() {
       measured_by: coord.measured_by
     }))
     
-    // console.log('Processed locations:', locations.value)
+    locationStore.value.setLocations(transformedLocations)
     
   } catch (err) {
     console.error('Error fetching bike location:', err)
-    error.value = err.message || 'Failed to load bike location'
+    locationStore.value.setError(err.message || 'Failed to load bike location')
   } finally {
-    loading.value = false
+    locationStore.value.setLoading(false)
   }
 }
 
 // Fetch data when component mounts
 onMounted(() => {
+  locationStore.value = useLocationStore()
   fetchBikeLocation()
 })
 </script>

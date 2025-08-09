@@ -1,0 +1,188 @@
+<template>
+  <div class="sidebar">
+    <div class="sidebar__header">
+      <h3>🚲 Recent X3 Locations</h3>
+    </div>
+    
+    <div class="sidebar__content">
+      <div 
+        v-for="(location, index) in locations" 
+        :key="index"
+        :class="['location-item', { 'location-item--selected': selectedLocationIndex === index }]"
+        @click="onLocationClick(index)"
+      >
+        <div class="location-item__header">
+          <span class="location-item__number">#{{ index + 1 }}</span>
+        </div>
+        
+        <div class="location-item__time">
+          <p class="time-label">Timestamp</p>
+          <p class="time-value">{{ location.datetime?.bike?.date }} {{ location.datetime?.bike?.time }}</p>
+        </div>
+        
+        <div class="location-item__coordinates">
+          <p><strong>Lat</strong> {{ Number(location.lat).toFixed(3) }}</p>
+          <p><strong>Lon</strong> {{ Number(location.lon).toFixed(3) }}</p>
+        </div>
+        
+        <div class="location-item__details">
+          <p><strong>Acc.</strong> {{ location.accuracy }}m</p>
+          <p><strong>Pings</strong> {{ location.measurements }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+const props = defineProps({
+  locations: {
+    type: Array,
+    default: () => []
+  },
+  selectedLocationIndex: {
+    type: Number,
+    default: null
+  }
+})
+
+const emit = defineEmits(['location-click'])
+
+function onLocationClick(index) {
+  emit('location-click', index)
+}
+</script>
+
+<style lang="scss" scoped>
+.sidebar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  
+  &__content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  &__header {
+    padding: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+    
+    h3 {
+      margin: 0;
+      color: #333;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  }
+  
+  &__count {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+  }
+  
+  
+}
+
+.location-item {
+  background: white;
+  border-radius: 8px;
+  padding: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    border-color: #FF5E5B;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  &--selected {
+    border-color: #FF5E5B;
+    background: #fff5f5;
+  }
+  
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  
+  &__number {
+    font-weight: bold;
+    color: #FF5E5B;
+    font-size: 16px;
+  }
+  
+  &__type {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+  }
+  
+  &__coordinates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 10px;
+    
+    p {
+      margin: 0;
+      font-size: 12px;
+      color: #666;
+    }
+  }
+  
+  &__details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    margin-bottom: 2px;
+    
+    p {
+      margin: 0;
+      font-size: 12px;
+      color: #666;
+    }
+  }
+  
+  &__time {
+    border-top: 1px solid #eee;
+    padding-top: 2px;
+    
+    .time-label {
+      font-size: 11px;
+      color: #999;
+      margin: 0 0 2px 0;
+      font-weight: 500;
+    }
+    
+    .time-value {
+      font-size: 12px;
+      color: #333;
+      margin: 0 0 8px 0;
+      font-family: monospace;
+    }
+  }
+}
+</style>

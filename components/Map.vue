@@ -1,43 +1,8 @@
 <template>
   <div class="map-view">
-    <div v-if="props.loading" class="loading">Loading recent locations...</div>
-    <div v-else-if="props.error" class="error">{{ props.error }}</div>
+    <div v-if="locationStore?.loading" class="loading">Loading recent locations...</div>
+    <div v-else-if="locationStore?.error" class="error">{{ locationStore.error }}</div>
     <div ref="mapContainer" class="map-view__container"></div>
-    
-    <!-- Right floating sidebar -->
-    <div class="sidebar">
-      <div class="sidebar__header">
-        <h3>🚲 Recent X3 Locations</h3>
-      </div>
-      
-      <div class="sidebar__content">
-        <div 
-          v-for="(location, index) in props.locations" 
-          :key="index"
-          :class="['location-item', { 'location-item--selected': selectedLocationIndex === index }]"
-          @click="selectLocation(index)"
-        >
-          <div class="location-item__header">
-            <span class="location-item__number">#{{ index + 1 }}</span>
-          </div>
-          
-          <div class="location-item__time">
-            <p class="time-label">Timestamp</p>
-            <p class="time-value">{{ location.datetime?.bike?.date }} {{ location.datetime?.bike?.time }}</p>
-          </div>
-          
-          <div class="location-item__coordinates">
-            <p><strong>Lat:</strong> {{ location.lat }}</p>
-            <p><strong>Lon:</strong> {{ location.lon }}</p>
-          </div>
-          
-          <div class="location-item__details">
-            <p><strong>Accuracy:</strong> {{ location.accuracy }}m</p>
-            <p><strong>Pings:</strong> {{ location.measurements }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -46,33 +11,15 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRuntimeConfig } from 'nuxt/app'
 import mapboxgl from 'mapbox-gl'
 import * as turf from '@turf/turf'
-
-// Circle scaling constants
-const ZOOM_MIN_MULT = 0.15
-const ZOOM_MAX_MULT = 20
+import { useLocationStore } from '~/stores/location-store'
 
 const config = useRuntimeConfig()
 const MAPBOX_TOKEN = config.public.mapboxToken
 
-const props = defineProps({
-  locations: {
-    type: Array,
-    default: () => []
-  },
-  loading: {
-    type: Boolean,
-    default: false
-  },
-  error: {
-    type: String,
-    default: null
-  }
-})
-
 const mapContainer = ref(null)
 const map = ref(null)
 const markers = ref([])
-const selectedLocationIndex = ref(null)
+const locationStore = ref(null)
 
 // Clear accuracy circles from the map
 function clearAccuracyCircles() {
@@ -94,10 +41,12 @@ function clearAccuracyCircles() {
 
 // Select a location and highlight its marker
 function selectLocation(index) {
-  selectedLocationIndex.value = index
+  if (!locationStore.value) return
+  
+  locationStore.value.selectLocation(index)
   
   if (markers.value[index] && map.value) {
-    const location = props.locations[index]
+    const location = locationStore.value.locations[index]
     
     // Close all existing popups first
     markers.value.forEach(marker => {
@@ -118,17 +67,19 @@ function selectLocation(index) {
   }
 }
 
-// Helper function to calculate distance between two points in meters
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000 // Earth's radius in meters
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-           Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-           Math.sin(dLon/2) * Math.sin(dLon/2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-  return R * c
-}
+// Watch for changes in locations and update markers
+watch(() => locationStore.value?.locations, () => {
+  if (map.value && map.value.loaded() && locationStore.value) {
+    createMarkers()
+  }
+}, { deep: true })
+
+// Watch for changes in selected location and update map view
+watch(() => locationStore.value?.selectedLocationIndex, (newIndex) => {
+  if (newIndex !== null && markers.value[newIndex] && map.value) {
+    selectLocation(newIndex)
+  }
+})
 
 // Helper function to calculate marker positions with anti-overlap offsets
 function calculateMarkerPositions(locations) {
@@ -171,7 +122,7 @@ function calculateMarkerPositions(locations) {
 
 // Create markers for locations
 function createMarkers() {
-  if (!map.value || !props.locations.length) return
+  if (!map.value || !locationStore.value || !locationStore.value.locations.length) return
 
   // Clear existing markers
   markers.value.forEach(marker => marker.remove())
@@ -180,11 +131,8 @@ function createMarkers() {
   // Clear existing accuracy circles
   clearAccuracyCircles()
 
-  // Calculate positions with anti-overlap offsets
-  const positionedLocations = calculateMarkerPositions(props.locations)
-
   // Create GeoJSON polygons for accuracy circles using turf
-  const circleFeatures = props.locations.map((location, index) => {
+  const circleFeatures = locationStore.value.locations.map((location, index) => {
     if (!location.lat || !location.lon || !location.accuracy) return null;
     // Use turf to create a circle polygon in meters
     const circle = turf.circle([location.lon, location.lat], location.accuracy, {
@@ -234,7 +182,7 @@ function createMarkers() {
   }
   
   // Create new markers
-  props.locations.forEach((location, index) => {
+  locationStore.value.locations.forEach((location, index) => {
     if (!location.lat || !location.lon) return
     
     // Create popup content
@@ -250,7 +198,36 @@ function createMarkers() {
       </div>
     `
     
-    const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupHTML)
+    const popup = new mapboxgl.Popup({ 
+      offset: 25,
+      closeButton: true,
+      closeOnClick: false,
+      closeOnMove: false,
+      focusAfterOpen: false // Prevents automatic focus that causes the aria-hidden warning
+    }).setHTML(popupHTML)
+    
+    // Add event listeners to handle focus issues
+    popup.on('open', () => {
+      // Remove aria-hidden to prevent the warning
+      const popupElement = popup.getElement()
+      if (popupElement) {
+        popupElement.removeAttribute('aria-hidden')
+        
+        // Find and handle the close button
+        const closeButton = popupElement.querySelector('.mapboxgl-popup-close-button')
+        if (closeButton) {
+          // Ensure close button can be focused but doesn't interfere with aria-hidden
+          closeButton.setAttribute('tabindex', '0')
+        }
+      }
+    })
+    
+    popup.on('close', () => {
+      // Blur any focused elements when popup closes
+      if (document.activeElement && document.activeElement.blur) {
+        document.activeElement.blur()
+      }
+    })
     
     const marker = new mapboxgl.Marker({
       color: '#FF5E5B'
@@ -259,13 +236,18 @@ function createMarkers() {
       .setPopup(popup)
       .addTo(map.value)
     
+    // Add click handler to marker
+    marker.getElement().addEventListener('click', () => {
+      locationStore.value.handleMarkerClick(index)
+    })
+    
     markers.value.push(marker)
   })
   
   // Fit map to show all markers if we have any
   if (markers.value.length > 0) {
     const bounds = new mapboxgl.LngLatBounds()
-    props.locations.forEach(location => {
+    locationStore.value.locations.forEach(location => {
       if (location.lat && location.lon) {
         bounds.extend([location.lon, location.lat])
       }
@@ -283,6 +265,9 @@ function createMarkers() {
 // Initialize map when component mounts
 onMounted(async () => {
   try {
+    // Initialize the store
+    locationStore.value = useLocationStore()
+    
     console.log('Initializing map...')
     console.log('Runtime config:', config)
     console.log('Mapbox token:', MAPBOX_TOKEN ? 'Present' : 'Missing')
@@ -340,13 +325,6 @@ onMounted(async () => {
   }
 })
 
-// Watch for changes in locations and update markers
-watch(() => props.locations, () => {
-  if (map.value && map.value.loaded()) {
-    createMarkers()
-  }
-}, { deep: true })
-
 // Clean up map when component unmounts
 onUnmounted(() => {
   // Remove markers
@@ -380,6 +358,20 @@ onUnmounted(() => {
     line-height: 16px;
     top: 2px;
     right: 2px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    
+    &:focus {
+      outline: 2px solid #FF5E5B;
+      outline-offset: 1px;
+    }
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+    }
   }
   
   h3 {
@@ -413,134 +405,6 @@ onUnmounted(() => {
     height: 100%;
     background-color: #e0e0e0;
     position: relative;
-  }
-}
-
-.sidebar {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 300px;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-left: 1px solid rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  
-  &__header {
-    padding: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.9);
-    
-    h3 {
-      margin: 0 0 5px 0;
-      color: #333;
-      font-size: 18px;
-      font-weight: 600;
-    }
-  }
-  
-  &__count {
-    margin: 0;
-    color: #666;
-    font-size: 14px;
-  }
-  
-  &__content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
-}
-
-.location-item {
-  background: white;
-  border-radius: 8px;
-  padding: 6px;
-  margin-bottom: 10px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  
-  &:hover {
-    border-color: #FF5E5B;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
-  
-  &--selected {
-    border-color: #FF5E5B;
-    background: #fff5f5;
-  }
-  
-  &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  &__number {
-    font-weight: bold;
-    color: #FF5E5B;
-    font-size: 16px;
-  }
-  
-  &__type {
-    background: #f0f0f0;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-    color: #666;
-    text-transform: uppercase;
-  }
-  
-  &__coordinates {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-    margin-bottom: 10px;
-    
-    p {
-      margin: 0;
-      font-size: 12px;
-      color: #666;
-    }
-  }
-  
-  &__details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-    margin-bottom: 2px;
-    
-    p {
-      margin: 0;
-      font-size: 12px;
-      color: #666;
-    }
-  }
-  
-  &__time {
-    border-top: 1px solid #eee;
-    padding-top: 8px;
-    
-    .time-label {
-      font-size: 11px;
-      color: #999;
-      margin: 0 0 2px 0;
-      font-weight: 500;
-    }
-    
-    .time-value {
-      font-size: 12px;
-      color: #333;
-      margin: 0 0 8px 0;
-      font-family: monospace;
-    }
   }
 }
 
