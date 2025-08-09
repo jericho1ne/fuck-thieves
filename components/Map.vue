@@ -20,7 +20,11 @@
         >
           <div class="location-item__header">
             <span class="location-item__number">#{{ index + 1 }}</span>
-            <span class="location-item__type">{{ location.type }}</span>
+          </div>
+          
+          <div class="location-item__time">
+            <p class="time-label">Timestamp</p>
+            <p class="time-value">{{ location.datetime?.bike?.date }} {{ location.datetime?.bike?.time }}</p>
           </div>
           
           <div class="location-item__coordinates">
@@ -30,14 +34,7 @@
           
           <div class="location-item__details">
             <p><strong>Accuracy:</strong> {{ location.accuracy }}m</p>
-            <p><strong>Measurements:</strong> {{ location.measurements }}</p>
-          </div>
-          
-          <div class="location-item__time">
-            <p class="time-label">User Time:</p>
-            <p class="time-value">{{ location.datetime?.user?.date }} {{ location.datetime?.user?.time }}</p>
-            <p class="time-label">Bike Time:</p>
-            <p class="time-value">{{ location.datetime?.bike?.date }} {{ location.datetime?.bike?.time }}</p>
+            <p><strong>Pings:</strong> {{ location.measurements }}</p>
           </div>
         </div>
       </div>
@@ -73,6 +70,24 @@ const map = ref(null)
 const markers = ref([])
 const selectedLocationIndex = ref(null)
 
+// Clear accuracy circles from the map
+function clearAccuracyCircles() {
+  if (!map.value) return
+  
+  // Remove layers if they exist
+  if (map.value.getLayer('accuracy-circles-fill')) {
+    map.value.removeLayer('accuracy-circles-fill')
+  }
+  if (map.value.getLayer('accuracy-circles-border')) {
+    map.value.removeLayer('accuracy-circles-border')
+  }
+  
+  // Remove source if it exists
+  if (map.value.getSource('accuracy-circles')) {
+    map.value.removeSource('accuracy-circles')
+  }
+}
+
 // Select a location and highlight its marker
 function selectLocation(index) {
   selectedLocationIndex.value = index
@@ -107,6 +122,75 @@ function createMarkers() {
   markers.value.forEach(marker => marker.remove())
   markers.value = []
   
+  // Clear existing accuracy circles
+  clearAccuracyCircles()
+  
+  // Create GeoJSON features for accuracy circles
+  const circleFeatures = props.locations.map((location, index) => {
+    if (!location.lat || !location.lon || !location.accuracy) return null
+    
+    return {
+      type: 'Feature',
+      properties: {
+        id: `accuracy-${index}`,
+        accuracy: location.accuracy
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: [location.lon, location.lat]
+      }
+    }
+  }).filter(Boolean)
+  
+  // Add accuracy circles source and layers
+  if (circleFeatures.length > 0) {
+    map.value.addSource('accuracy-circles', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: circleFeatures
+      }
+    })
+    
+    // Add fill circles (dark gray with 30% opacity)
+    map.value.addLayer({
+      id: 'accuracy-circles-fill',
+      type: 'circle',
+      source: 'accuracy-circles',
+      paint: {
+        'circle-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          10, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.03],
+          20, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.6]
+        ],
+        'circle-color': '#4a4a4a',
+        'circle-opacity': 0.3
+      }
+    })
+    
+    // Add border circles (white outline)
+    map.value.addLayer({
+      id: 'accuracy-circles-border',
+      type: 'circle',
+      source: 'accuracy-circles',
+      paint: {
+        'circle-radius': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          10, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.03],
+          20, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.6]
+        ],
+        'circle-color': 'transparent',
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-opacity': 0.8
+      }
+    })
+  }
+  
   // Create new markers
   props.locations.forEach((location, index) => {
     if (!location.lat || !location.lon) return
@@ -118,9 +202,8 @@ function createMarkers() {
         <div class="bike-popup__content">
           <p><strong>Latitude:</strong> ${location.lat}</p>
           <p><strong>Longitude:</strong> ${location.lon}</p>
-          <p><strong>Accuracy:</strong> ${location.accuracy}m</p>
-          <p><strong>Type:</strong> ${location.type}</p>
-          <p><strong>Measurements:</strong> ${location.measurements}</p>
+          <p><strong>Accuracy:</strong> ${location.accuracy}</p>
+          <p><strong>Pings:</strong> ${location.measurements}</p>
           <p><small>User Time: ${location.datetime?.user?.date} ${location.datetime?.user?.time}</small></p>
           <p><small>Bike Time: ${location.datetime?.bike?.date} ${location.datetime?.bike?.time}</small></p>
         </div>
@@ -218,6 +301,9 @@ watch(() => props.locations, () => {
 onUnmounted(() => {
   // Remove markers
   markers.value.forEach(marker => marker.remove())
+  
+  // Clear accuracy circles
+  clearAccuracyCircles()
   
   if (map.value) {
     map.value.remove()
