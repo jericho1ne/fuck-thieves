@@ -245,8 +245,6 @@ function createMarkers() {
           <p><strong>Latitude:</strong> ${location.lat}</p>
           <p><strong>Longitude:</strong> ${location.lon}</p>
           <p><strong>Accuracy:</strong> ${location.accuracy}</p>
-          <p><strong>Pings:</strong> ${location.measurements}</p>
-          <p><small>User Time: ${location.datetime?.user?.date} ${location.datetime?.user?.time}</small></p>
           <p><small>Bike Time: ${location.datetime?.bike?.date} ${location.datetime?.bike?.time}</small></p>
         </div>
       </div>
