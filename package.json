@@ -1,0 +1,37 @@
+{
+  "name": "fuck-thieves",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "pnpm store prune && rm -rf node_modules && pnpm install",
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.5.1",
+    "@supabase/supabase-js": "^2.50.0",
+    "@vueuse/head": "^2.0.0",
+    "mapbox-gl": "^2.15.0",
+    "pinia": "^2.1.7",
+    "sass": "^1.69.5"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@types/mapbox-gl": "^2.7.19",
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.34.0",
+    "@typescript-eslint/parser": "^8.34.0",
+    "dotenv": "^16.5.0",
+    "eslint": "^9.29.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-vue": "^10.2.0",
+    "nuxt": "^3.8.2",
+    "typescript": "^5.3.3",
+    "vue": "^3.3.8",
+    "vue-router": "^4.2.5"
+  }
+}
