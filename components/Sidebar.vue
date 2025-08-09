@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar">
     <div class="sidebar__header">
-      <h3>🚲 Recent X3 Locations</h3>
+      <h3>🚲 X3 Locations</h3>
     </div>
     
     <div class="sidebar__content">
@@ -21,8 +21,8 @@
         </div>
         
         <div class="location-item__coordinates">
-          <p><strong>Lat</strong> {{ Number(location.lat).toFixed(3) }}</p>
-          <p><strong>Lon</strong> {{ Number(location.lon).toFixed(3) }}</p>
+          <p><strong>Lat</strong> {{ Number(location.lat).toFixed(2) }}</p>
+          <p><strong>Lon</strong> {{ Number(location.lon).toFixed(2) }}</p>
         </div>
         
         <div class="location-item__details">
@@ -74,6 +74,26 @@ function onLocationClick(index) {
     overflow-y: auto;
     padding: 10px;
     gap: 10px;
+    
+    // Modern scrollbar styling
+    scrollbar-width: thin;
+    scrollbar-color: #777 #999;
+    
+    // Webkit scrollbar styling for Chrome/Safari
+    &::-webkit-scrollbar {
+      height: 1px !important; // Horizontal scrollbar height
+      width: 1px !important; // Vertical scrollbar width
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(0,0,0, 0.5) !important;
+      border-radius: 3px !important;
+      width: 3px !important;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #111 !important;
+    }
   }
   
   &__header {

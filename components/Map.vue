@@ -188,12 +188,12 @@ function createMarkers() {
     // Create popup content
     const popupHTML = `
       <div class="bike-popup">
-        <h3>🚲 Bike Location ${index + 1}</h3>
+        <h3>Bike Location ${index + 1}</h3>
         <div class="bike-popup__content">
+          <p><small>${location.datetime?.bike?.date} ${location.datetime?.bike?.time}</small></p>
           <p><strong>Latitude:</strong> ${location.lat}</p>
           <p><strong>Longitude:</strong> ${location.lon}</p>
           <p><strong>Accuracy:</strong> ${location.accuracy}</p>
-          <p><small>Bike Time: ${location.datetime?.bike?.date} ${location.datetime?.bike?.time}</small></p>
         </div>
       </div>
     `
@@ -352,9 +352,9 @@ onUnmounted(() => {
   z-index: 3;
   
   .mapboxgl-popup-close-button {
-    font-size: 16px;
-    width: 20px;
-    height: 20px;
+    font-size: 24px;
+    width: 32px;
+    height: 32px;
     line-height: 16px;
     top: 2px;
     right: 2px;
@@ -362,6 +362,7 @@ onUnmounted(() => {
     border: none;
     cursor: pointer;
     outline: none;
+    transition: 0.3s background ease-in-out;
     
     &:focus {
       outline: 2px solid #FF5E5B;
@@ -375,12 +376,12 @@ onUnmounted(() => {
   }
   
   h3 {
-    margin: 0 0 8px 0;
+    margin: 0 0 2px 0;
     color: #333;
   }
   
   p {
-    margin: 4px 0;
+    margin: 2px 0;
     color: #666;
   }
   

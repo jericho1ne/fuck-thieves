@@ -67,11 +67,11 @@ export const useLocationStore = defineStore('location', () => {
     selectedLocationIndex,
     loading,
     error,
-    
+
     // Getters
     selectedLocation,
     hasLocations,
-    
+
     // Actions
     setLocations,
     selectLocation,
