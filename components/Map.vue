@@ -244,15 +244,20 @@ function createMarkers() {
 onMounted(async () => {
   try {
     console.log('Initializing map...')
+    console.log('Runtime config:', config)
     console.log('Mapbox token:', MAPBOX_TOKEN ? 'Present' : 'Missing')
+    console.log('Mapbox token length:', MAPBOX_TOKEN?.length)
+    console.log('Current domain:', window.location.hostname)
+    console.log('Current URL:', window.location.href)
     
     if (!MAPBOX_TOKEN || MAPBOX_TOKEN.trim() === '') {
       console.error('No mapbox token found')
-      return
+      throw new Error('Mapbox token is missing')
     }
     
     // Set mapbox access token
     mapboxgl.accessToken = MAPBOX_TOKEN
+    console.log('Set mapboxgl.accessToken')
     
     // Wait for the DOM to be ready
     await nextTick()
@@ -263,6 +268,7 @@ onMounted(async () => {
     }
     
     console.log('Creating map instance...')
+    console.log('Using style: mapbox://styles/mapbox/satellite-v9')
     
     // Initialize the map with a simpler configuration
     map.value = new mapboxgl.Map({
@@ -280,13 +286,19 @@ onMounted(async () => {
       createMarkers()
     })
     
-    // Log any map errors
+    // Log any map errors with more detail
     map.value.on('error', (e) => {
-      console.error('Mapbox error:', e.error)
+      console.error('Mapbox error details:', {
+        error: e.error,
+        target: e.target,
+        type: e.type,
+        originalEvent: e.originalEvent
+      })
     })
     
   } catch (err) {
     console.error('Error initializing map:', err)
+    console.error('Error stack:', err.stack)
   }
 })
 
