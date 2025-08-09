@@ -97,7 +97,7 @@ function onLocationClick(index) {
   }
   
   &__header {
-    padding: 10px;
+    padding: 8px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     background: rgba(255, 255, 255, 0.9);
     
@@ -112,13 +112,54 @@ function onLocationClick(index) {
   &__count {
     margin: 0;
     color: #666;
-    font-size: 14px;
   }
   
   
+  // Mobile/tablet responsive layout
+  @media (max-width: 768px) {
+    border: 2px solid red;
+    font-size: 10px;
+    height: 130px;
+    
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    border-left: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    flex-direction: column;
+    
+    &__header {
+      display: none;
+    }
+    
+    &__content {
+      flex-direction: row;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px;
+      gap: 8px;
+    }
+    
+    .location-item {
+      flex-shrink: 0;
+      gap: 4px;
+      
+      &__number {
+        font-size: 12px;
+      }
+    }
+  }
 }
 
+
 .location-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
   background: white;
   border-radius: 8px;
   padding: 6px;
@@ -164,7 +205,6 @@ function onLocationClick(index) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 5px;
-    margin-bottom: 10px;
     
     p {
       margin: 0;
@@ -177,7 +217,6 @@ function onLocationClick(index) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 5px;
-    margin-bottom: 2px;
     
     p {
       margin: 0;
@@ -191,16 +230,14 @@ function onLocationClick(index) {
     padding-top: 2px;
     
     .time-label {
-      font-size: 11px;
       color: #999;
-      margin: 0 0 2px 0;
+      margin: 0;
       font-weight: 500;
     }
     
     .time-value {
-      font-size: 12px;
       color: #333;
-      margin: 0 0 8px 0;
+      margin: 0;
       font-family: monospace;
     }
   }

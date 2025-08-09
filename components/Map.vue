@@ -298,7 +298,8 @@ onMounted(async () => {
       container: mapContainer.value,
       style: 'mapbox://styles/mapbox/streets-v12', // Use a simpler style
       center: [-118.41, 33.99373],
-      zoom: 15.5
+      zoom: 15.5,
+      attributionControl: false,
     })
     
     console.log('Map instance created')
@@ -376,12 +377,12 @@ onUnmounted(() => {
   }
   
   h3 {
-    margin: 0 0 2px 0;
+    margin: 0;
     color: #333;
   }
   
   p {
-    margin: 2px 0;
+    margin: 0;
     color: #666;
   }
   
@@ -455,5 +456,4 @@ onUnmounted(() => {
     position: relative;
   }
 }
-
 </style>
