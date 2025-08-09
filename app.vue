@@ -49,7 +49,7 @@ async function fetchBikeLocation() {
       measured_by: coord.measured_by
     }))
     
-    console.log('Processed locations:', locations.value)
+    // console.log('Processed locations:', locations.value)
     
   } catch (err) {
     console.error('Error fetching bike location:', err)

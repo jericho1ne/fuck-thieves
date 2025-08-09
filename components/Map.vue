@@ -161,8 +161,8 @@ function createMarkers() {
           'interpolate',
           ['linear'],
           ['zoom'],
-          10, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.03],
-          20, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.6]
+          10, ['*', ['*', ['get', 'accuracy'], 0.5], 0.1],
+          20, ['*', ['*', ['get', 'accuracy'], 0.5], 2]
         ],
         'circle-color': '#4a4a4a',
         'circle-opacity': 0.3
@@ -179,8 +179,8 @@ function createMarkers() {
           'interpolate',
           ['linear'],
           ['zoom'],
-          10, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.03],
-          20, ['*', ['/', ['get', 'accuracy'], 3.28084], 0.6]
+          10, ['*', ['*', ['get', 'accuracy'], 0.5], 0.1],
+          20, ['*', ['*', ['get', 'accuracy'], 0.5], 2]
         ],
         'circle-color': 'transparent',
         'circle-stroke-width': 2,

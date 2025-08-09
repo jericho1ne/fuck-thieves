@@ -15,22 +15,19 @@ export default defineEventHandler(async (event) => {
     // Filter coordinates to only include data from August 1st, 2025 onward
     if (data.coordinates && Array.isArray(data.coordinates)) {
       const cutoffDate = new Date('2025-08-01T00:00:00.000Z')
-      
+
       data.coordinates = data.coordinates.filter(coord => {
         if (!coord.datetime?.user?.date) return false
-        
+
         // Parse the date string (format: "DD-MM-YYYY")
         const [day, month, year] = coord.datetime.user.date.split('-')
         const coordDate = new Date(`${year}-${month}-${day}T00:00:00.000Z`)
-        
+
         return coordDate >= cutoffDate
       })
-      
+
       console.log(`Filtered coordinates: ${data.coordinates.length} entries from August 1st, 2025 onward`)
     }
-
-    // Print out the filtered JSON structure (for debugging)
-    console.warn('Filtered VanMoof API Response:', JSON.stringify(data, null, 2))
 
     return {
       success: true,
