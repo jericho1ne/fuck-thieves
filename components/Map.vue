@@ -22,6 +22,7 @@ import { useRuntimeConfig } from 'nuxt/app'
 import mapboxgl from 'mapbox-gl'
 import * as turf from '@turf/turf'
 import { useLocationStore } from '~/stores/location-store'
+import { formatDate } from '~/utils/common'
 
 const config = useRuntimeConfig()
 const MAPBOX_TOKEN = config.public.mapboxToken
@@ -39,7 +40,6 @@ const MAP_STYLES = {
 
 const currentStyle = ref(MAP_STYLES.satellite)
   
-
 const INIT_CENTER = [-118.41, 33.99373]   // Focus on Mar Vista Gardens
 const INIT_ZOOM = 13  
 
@@ -228,7 +228,7 @@ function createMarkers() {
       <div class="bike-popup">
         <h3>Bike Location ${index + 1}</h3>
         <div class="bike-popup__content">
-          <p><small>${location.datetime?.bike?.date} ${location.datetime?.bike?.time}</small></p>
+          <p><small>${formatDate(location.datetime?.bike?.date)} ${location.datetime?.bike?.time}</small></p>
           <p><strong>Latitude:</strong> ${location.lat}</p>
           <p><strong>Longitude:</strong> ${location.lon}</p>
         </div>

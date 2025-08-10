@@ -17,7 +17,7 @@
         
         <div class="location-item__time">
           <p class="time-label">Timestamp</p>
-          <p class="time-value">{{ location.datetime?.bike?.date }} {{ location.datetime?.bike?.time }}</p>
+          <p class="time-value">{{ formatDate(location.datetime?.bike?.date) }} {{ location.datetime?.bike?.time }}</p>
         </div>
         
         <div class="location-item__coordinates">
@@ -35,6 +35,8 @@
 </template>
 
 <script setup>
+import { formatDate } from '~/utils/common'
+
 const props = defineProps({
   locations: {
     type: Array,
@@ -117,8 +119,7 @@ function onLocationClick(index) {
   
   // Mobile/tablet responsive layout
   @media (max-width: 768px) {
-    font-size: 10px;
-    height: 130px;
+    height: fit-content;
     
     position: fixed;
     top: auto;
@@ -136,10 +137,15 @@ function onLocationClick(index) {
     
     &__content {
       flex-direction: row;
+      
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 4px;
+      padding: 6px;
       gap: 8px;
+      
+      p {
+        font-size: 10px !important;
+      }
     }
     
     .location-item {
