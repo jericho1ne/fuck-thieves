@@ -117,7 +117,6 @@ function onLocationClick(index) {
   
   // Mobile/tablet responsive layout
   @media (max-width: 768px) {
-    border: 2px solid red;
     font-size: 10px;
     height: 130px;
     

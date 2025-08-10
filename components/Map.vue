@@ -195,14 +195,14 @@ function createMarkers() {
       }
     })
 
-    // Add fill polygons (dark gray with 20% opacity)
+    // Add fill polygons (dark gray)
     map.value.addLayer({
       id: 'accuracy-circles-fill',
       type: 'fill',
       source: 'accuracy-circles',
       paint: {
-        'fill-color': '#4a4a4a',
-        'fill-opacity': 0.2
+        'fill-color': '#444',
+        'fill-opacity': 0.1
       }
     })
 
@@ -214,7 +214,7 @@ function createMarkers() {
       paint: {
         'line-color': '#ffffff',
         'line-width': 2,
-        'line-opacity': 0.8
+        'line-opacity': 0.6
       }
     })
   }
@@ -231,13 +231,12 @@ function createMarkers() {
           <p><small>${location.datetime?.bike?.date} ${location.datetime?.bike?.time}</small></p>
           <p><strong>Latitude:</strong> ${location.lat}</p>
           <p><strong>Longitude:</strong> ${location.lon}</p>
-          <p><strong>Accuracy:</strong> ${location.accuracy}</p>
         </div>
       </div>
     `
     
     const popup = new mapboxgl.Popup({ 
-      offset: 25,
+      offset: [0, -48], // Move popup 40px higher (negative Y offset)
       closeButton: true,
       closeOnClick: false,
       closeOnMove: false,
@@ -373,17 +372,21 @@ onUnmounted(() => {
 .mapboxgl-marker {
   cursor: pointer;
 }
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}
   
 .mapboxgl-popup-content {
   display: block;
-  min-width: 180px;
-  padding: 10px;
+  min-width: 140px;
+  padding: 6px;
   z-index: 3;
   
   .mapboxgl-popup-close-button {
-    font-size: 24px;
-    width: 32px;
-    height: 32px;
+    font-size: 22px;
+    width: 28px;
+    height: 28px;
     line-height: 16px;
     top: 2px;
     right: 2px;
