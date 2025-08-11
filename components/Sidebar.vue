@@ -17,7 +17,7 @@
         
         <div class="location-item__time">
           <p class="time-label">Timestamp</p>
-          <p class="time-value">{{ formatDate(location.datetime?.bike?.date) }} {{ location.datetime?.bike?.time }}</p>
+          <p class="time-value">{{ location.datetime?.bike?.date }} {{ location.datetime?.bike?.time }}</p>
         </div>
         
         <div class="location-item__coordinates">
@@ -68,6 +68,7 @@ function onLocationClick(index) {
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  z-index: 2;
   
   &__content {
     display: flex;
@@ -120,6 +121,7 @@ function onLocationClick(index) {
   // Mobile/tablet responsive layout
   @media (max-width: 768px) {
     height: fit-content;
+    min-height: 120px;
     
     position: fixed;
     top: auto;
@@ -127,6 +129,7 @@ function onLocationClick(index) {
     left: 0;
     right: 0;
     width: 100vw;
+    overflow-x: auto;
     border-left: none;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
     flex-direction: column;
