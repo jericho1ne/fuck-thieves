@@ -12,12 +12,13 @@
         @click="onLocationClick(index)"
       >
         <div class="location-item__header">
-          <span class="location-item__number">#{{ index + 1 }}</span>
+          <span class="location-item__number">
+            #{{ index + 1 }} {{ index === 0 ? '(most recent)' : '' }}</span>
         </div>
         
         <div class="location-item__time">
           <p class="time-label">Timestamp</p>
-          <p class="time-value">{{ location.datetime?.bike?.date }} {{ location.datetime?.bike?.time }}</p>
+          <p class="time-value">{{ formatDate(location.datetime?.bike?.date) }} {{ location.datetime?.bike?.time }}</p>
         </div>
         
         <div class="location-item__coordinates">
